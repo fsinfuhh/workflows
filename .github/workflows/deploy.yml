@@ -56,15 +56,15 @@ jobs:
           # ensure name is lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
           echo "DEPLOY_IMAGE_NAME=${NAME,,}" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v3
-        with:
-          repository: https://git.mafiasi.de/Server-AG/ansible.git
-          token: ${{ secrets.GITEA_ACCESS_TOKEN }}
+      - name: Checkout ansible
+        run: |
+          git config --global credential.helper '!p() { echo username=github; echo password=${{ secrets.GITEA_ACCESS_TOKEN }}; }; p'
+          git clone https://git.mafiasi.de/Server-AG/ansible.git
 
       - name: update deployed image digest
         shell: bash
         run: |
-          cd ${{ inputs.app_path }}
+          cd ansible/${{ inputs.app_path }}
           kustomize edit set image ${{ env.DEPLOY_IMAGE_NAME }}@${{ inputs.new_digest }}
 
       - uses: stefanzweifel/git-auto-commit-action@v4
