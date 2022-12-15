@@ -8,6 +8,8 @@ The contained workflows are:
 - [build_image.yml](.github/workflows/build_image.yml) which builds a container and pushes it to GitHub packages (or another registry).
 
 - [check_pre_commit.yml](.github/workflows/check_pre_commit.yml) for checking whether all [pre-commit](https://pre-commit.com/) checks pass
+  
+- [deploy.yml](.github/workflows/deploy.yml) for setting the deployed image digest in our [ansible repository](https://git.mafiasi.de/Server-AG/ansible).
 
 See the linked workflow definitions for the list of inputs that they expect.
 

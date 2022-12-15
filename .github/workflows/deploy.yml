@@ -1,0 +1,77 @@
+on:
+  workflow_call:
+    secrets:
+      GITEA_ACCESS_TOKEN:
+        description: |
+          Personal Access Token of an account that can write to the Server-AG/ansible repo in gitea.
+          It is named like this because an organization secret with the same name exists which should be used.
+        required: true
+
+    inputs:
+      app_path:
+        description: |
+          The full path from ansible repository root to the directory containing the kustomization.yml file
+        type: string
+        required: true
+      image_name:
+        description: |
+          Which image should have its deployed digest updated.
+          Defaults to ghcr.io/fsinfuhh/<github_repo_name>
+        type: string
+        required: false
+      new_digest:
+        description: |
+          The image digest that should be deployed
+        type: string
+        required: true
+
+concurrency: ${{ github.repository }}
+
+jobs:
+  update-deployed-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup go build caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: golang-${{ hashFiles('/usr/local/bin/kustomize') }}
+          restore-keys: golang-
+
+      - name: install kustomize
+        run: GOBIN=/usr/local/bin go install sigs.k8s.io/kustomize/kustomize/v4@latest
+
+      - name: calculate image name
+        shell: bash
+        run: |
+          # apply default from github.repository context
+          if [[ -z "${{ inputs.image_name }}" ]]; then
+            NAME="ghcr.io/${{ github.repository }}"
+          else
+            NAME="${{ inputs.image_name }}"
+          fi
+          
+          # ensure name is lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+          echo "DEPLOY_IMAGE_NAME=${NAME,,}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v3
+        with:
+          repository: https://git.mafiasi.de/Server-AG/ansible.git
+          token: ${{ secrets.GITEA_ACCESS_TOKEN }}
+
+      - name: update deployed image digest
+        shell: bash
+        run: |
+          cd ${{ inputs.app_path }}
+          kustomize edit set image ${{ env.DEPLOY_IMAGE_NAME }}@${{ inputs.new_digest }}
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: |
+            Update ${{ inputs.app_path }} image ${{ env.DEPLOY_IMAGE_NAME }}
+            
+            New digest = ${{ inputs.new_digest }}
+          commit_user_name: github
+          commit_user_email: ag-server+github@informatik.uni-hamburg.de
