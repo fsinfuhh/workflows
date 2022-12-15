@@ -21,7 +21,7 @@ on:
       image_tag:
         description: |
           Optional tag under which the built image is published.
-          Defaults to "latest" for branch main and "stage-latest" for branch "stage" or "staging" and "dev-latest" for branch "dev" or "develop".
+          Defaults to "latest" for branch main or master, "stage-latest" for branch "stage" or "staging" and "dev-latest" for branch "dev" or "develop".
         type: string
         required: false
       build_target:
@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           if [[ -z "${{ inputs.image_tag }}" ]]; then
-            if [[ "${{ github.ref_name }}" == "main" ]]; then
+            if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
               echo "::set-output name=image_tag::latest"
               echo "BUILD_IMAGE_TAG=latest" >> $GITHUB_ENV
             elif [[ "${{ github.ref_name }}" == "stage" || "${{ github.ref_name }}" == "staging" ]]; then
