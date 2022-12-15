@@ -31,7 +31,7 @@ jobs:
   update-deployed-image:
     runs-on: ubuntu-latest
     steps:
-      - name: setup go build caching
+      - name: Setup go build caching
         uses: actions/cache@v3
         with:
           path: |
@@ -40,10 +40,10 @@ jobs:
           key: golang-${{ hashFiles('/usr/local/bin/kustomize') }}
           restore-keys: golang-
 
-      - name: install kustomize
+      - name: Install kustomize
         run: GOBIN=/usr/local/bin go install sigs.k8s.io/kustomize/kustomize/v4@latest
 
-      - name: calculate image name
+      - name: Calculate image name
         shell: bash
         run: |
           # apply default from github.repository context
@@ -61,17 +61,14 @@ jobs:
           git config --global credential.helper '!p() { echo username=github; echo password=${{ secrets.GITEA_ACCESS_TOKEN }}; }; p'
           git clone https://git.mafiasi.de/Server-AG/ansible.git
 
-      - name: update deployed image digest
+      - name: Update deployed image digest
         shell: bash
         run: |
           cd ansible/${{ inputs.app_path }}
           kustomize edit set image ${{ env.DEPLOY_IMAGE_NAME }}@${{ inputs.new_digest }}
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: |
-            Update ${{ inputs.app_path }} image ${{ env.DEPLOY_IMAGE_NAME }}
-            
-            New digest = ${{ inputs.new_digest }}
-          commit_user_name: github
-          commit_user_email: ag-server+github@informatik.uni-hamburg.de
+      - name: Push commits from ansible
+        run: |
+          cd ansible
+          git commit -a -m "Update ${{ inputs.app_path }} image ${{ env.DEPLOY_IMAGE_NAME }}"
+          git push
