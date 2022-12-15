@@ -79,7 +79,7 @@ jobs:
           fi
           
           # ensure name is lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
-          echo "::set-output name=image_name::$NAME"
+          echo "image_name=$NAME" >> $GITHUB_OUTPUT 
           echo "BUILD_IMAGE_NAME=${NAME,,}" >> $GITHUB_ENV
       - name: calculate image tag
         id: calc_image_tag
@@ -87,20 +87,20 @@ jobs:
         run: |
           if [[ -z "${{ inputs.image_tag }}" ]]; then
             if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
-              echo "::set-output name=image_tag::latest"
+              echo "image_tag=latest" >> $GITHUB_OUTPUT
               echo "BUILD_IMAGE_TAG=latest" >> $GITHUB_ENV
             elif [[ "${{ github.ref_name }}" == "stage" || "${{ github.ref_name }}" == "staging" ]]; then
-              echo "::set-output name=image_tag::stage-latest"
+              echo "image_tag=stage-latest" >> $GITHUB_OUTPUT
               echo "BUILD_IMAGE_TAG=stage-latest" >> $GITHUB_ENV
             elif [[ "${{ github.ref_name }}" == "develop" || "${{ github.ref_name }}" == "dev" ]]; then
-              echo "::set-output name=image_tag::dev-latest"
+              echo "image_tag=dev-latest" >> $GITHUB_OUTPUT
               echo "BUILD_IMAGE_TAG=dev-latest" >> $GITHUB_ENV    
             else
               echo "Invalid github ref name ${{ github.ref_name }}"
               exit 1
             fi
           else
-            echo "::set-output name=image_tag::${{ inputs.image_tag }}"
+            echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
             echo "BUILD_IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
           fi
       - uses: docker/build-push-action@v3
