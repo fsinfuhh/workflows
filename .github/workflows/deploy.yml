@@ -70,5 +70,7 @@ jobs:
       - name: Push commits from ansible
         run: |
           cd ansible
+          git config --global user.name "github"
+          git config --global user.email "ag-server+github@informatik.uni-hamburg.de"
           git commit -a -m "Update ${{ inputs.app_path }} image ${{ env.DEPLOY_IMAGE_NAME }}"
           git push
